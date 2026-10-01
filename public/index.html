@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>SNG GAME BAR</title>
+<meta name="theme-color" content="#0b0d17">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo"><span class="logo-badge">SNG</span> GAME BAR</div>
+  <button class="icon-btn" onclick="openMyOrders()">📋</button>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-badge">⚡ Онлайн 24/7 · 5–15 минут</div>
+    <h1>Донат для любимых игр</h1>
+    <p>Free Fire · PUBG · Genshin · Roblox · COD · TG Premium и Stars</p>
+  </section>
+
+  <section class="section">
+    <h2>Выбери игру</h2>
+    <div class="games-grid" id="gamesGrid"></div>
+  </section>
+
+  <section class="section">
+    <h2>Как это работает</h2>
+    <div class="steps">
+      <div class="step"><span>1</span><h3>Игра и товар</h3><p>Выбери что нужно.</p></div>
+      <div class="step"><span>2</span><h3>Ник / ID</h3><p>Точно как в игре.</p></div>
+      <div class="step"><span>3</span><h3>Оплата + чек</h3><p>Переведи и прикрепи скрин.</p></div>
+      <div class="step"><span>4</span><h3>Получи донат</h3><p>5–15 минут.</p></div>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="gameModal">
+  <div class="modal-box">
+    <button class="close" onclick="closeModal()">✕</button>
+    <h2 id="modalGameName"></h2>
+    <p class="modal-sub">Выбери товар:</p>
+    <div id="modalItems" class="items-list"></div>
+    <div class="form-block" id="orderForm">
+      <label>Ник / ID игрока
+        <input type="text" id="playerId" placeholder="Например: 123456789" autocomplete="off">
+      </label>
+      <label>Способ оплаты
+        <select id="payMethod"></select>
+      </label>
+      <div id="payReqs" class="reqs"></div>
+      <label>Контакт для связи
+        <input type="text" id="contact" placeholder="@username или телефон" autocomplete="off">
+      </label>
+      <label>Скриншот чека
+        <input type="file" id="receipt" accept="image/*">
+      </label>
+      <button class="btn-primary" id="submitOrder" disabled>Подтвердить оплату</button>
+      <div class="status" id="orderStatus"></div>
+    </div>
+    <div class="success-box" id="successBox" style="display:none">
+      <div class="success-icon">✅</div>
+      <h3>Заявка принята!</h3>
+      <p>Номер: <b id="successId"></b></p>
+      <p>Проверим и зачислим в течение 5–15 минут.</p>
+      <button class="btn-primary" onclick="closeModal()">Отлично</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="myOrdersModal">
+  <div class="modal-box">
+    <button class="close" onclick="closeMyOrders()">✕</button>
+    <h2>📋 Мои заявки</h2>
+    <div id="myOrdersList"><div class="empty">Загрузка...</div></div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
