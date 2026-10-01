@@ -203,3 +203,26 @@ function closeMyOrders() {
 }
 
 loadConfig();
+// ========================================
+// АВТО-ПОКАЗ КНОПКИ АДМИН
+// ========================================
+const ADMIN_IDS = ['6940892940', '7934934196']; // твои Telegram ID
+
+function checkAdminAccess() {
+  const user = tg?.initDataUnsafe?.user;
+  if (!user) return;
+
+  if (ADMIN_IDS.includes(String(user.id))) {
+    const btn = document.getElementById('adminBtn');
+    if (btn) btn.style.display = 'flex';
+  }
+}
+
+function openAdmin() {
+  if (tg) tg.HapticFeedback?.impactOccurred('medium');
+  // Открываем админку внутри Mini App
+  window.location.href = '/admin.html';
+}
+
+// Проверяем после полной загрузки
+setTimeout(checkAdminAccess, 300);

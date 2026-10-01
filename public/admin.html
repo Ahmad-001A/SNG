@@ -12,7 +12,7 @@
 <div id="loginScreen" class="login-screen">
   <div class="login-box">
     <h1><span class="logo-badge">SNG</span> ADMIN</h1>
-    <p>Пароль (только для админов)</p>
+    <p id="loginHint">Введите пароль администратора</p>
     <input type="password" id="pass" placeholder="Пароль" onkeydown="if(event.key==='Enter')login()">
     <button class="btn-primary" onclick="login()">Войти</button>
     <div class="status" id="loginStatus"></div>

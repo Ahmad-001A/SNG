@@ -12,7 +12,10 @@
 
 <header class="topbar">
   <div class="logo"><span class="logo-badge">SNG</span> GAME BAR</div>
-  <button class="icon-btn" onclick="openMyOrders()">📋</button>
+  <div class="topbar-buttons">
+    <button class="icon-btn" onclick="openMyOrders()" title="Мои заявки">📋</button>
+    <button class="icon-btn admin-btn" id="adminBtn" onclick="openAdmin()" style="display:none" title="Админ-панель">⚙️</button>
+  </div>
 </header>
 
 <main>

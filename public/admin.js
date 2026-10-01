@@ -1,8 +1,22 @@
+// ===== ИНИЦИАЛИЗАЦИЯ TELEGRAM =====
 const tg = window.Telegram?.WebApp;
-let PASSWORD = localStorage.getItem('sng_pass') || '';
-let INIT_DATA = tg?.initData || '';
+const INIT_DATA = tg?.initData || '';
+const tgUser = tg?.initDataUnsafe?.user || null;
+
+// Твои Telegram ID (кому доступна админка)
+const ADMIN_IDS = ['6940892940', '7934934196'];
+
+// Признак того что это админ из Telegram
+const isTelegramAdmin = tgUser && ADMIN_IDS.includes(String(tgUser.id));
+
+// Пароль (для обычного браузера)
+let PASSWORD = isTelegramAdmin ? 'tg' : (localStorage.getItem('sng_pass') || '');
+
 let currentFilter = 'all';
 
+// ========================================
+// API helper
+// ========================================
 async function api(path, opts = {}) {
   opts.headers = {
     ...(opts.headers || {}),
@@ -15,10 +29,28 @@ async function api(path, opts = {}) {
   return r.json();
 }
 
+// ========================================
+// АВТО-ВХОД ДЛЯ АДМИНОВ ИЗ TELEGRAM
+// ========================================
+if (isTelegramAdmin) {
+  // В Telegram мы уже знаем что ты админ — пропускаем экран логина
+  window.addEventListener('load', () => {
+    const hint = document.getElementById('loginHint');
+    if (hint) hint.textContent = 'Вход через Telegram...';
+    setTimeout(() => {
+      if (typeof showPanel === 'function') showPanel();
+    }, 100);
+  });
+}
+
+// ========================================
+// ВХОД / ВЫХОД
+// ========================================
 async function login() {
   const p = document.getElementById('pass').value;
   const r = await fetch('/api/admin/login', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password: p })
   });
   if (r.ok) {
@@ -32,15 +64,23 @@ async function login() {
 
 function logout() {
   localStorage.removeItem('sng_pass');
-  location.reload();
+  location.href = '/';
 }
 
 function showPanel() {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('adminPanel').style.display = 'block';
-  loadStats(); loadOrders(); loadGames(); loadPayments();
+  const loginScreen = document.getElementById('loginScreen');
+  const panel = document.getElementById('adminPanel');
+  if (loginScreen) loginScreen.style.display = 'none';
+  if (panel) panel.style.display = 'block';
+  loadStats();
+  loadOrders();
+  loadGames();
+  loadPayments();
 }
 
+// ========================================
+// TABS + FILTERS
+// ========================================
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
   document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
@@ -55,15 +95,25 @@ document.querySelectorAll('.filter-btn').forEach(b => b.onclick = () => {
   loadOrders();
 });
 
+// ========================================
+// STATS
+// ========================================
 async function loadStats() {
-  const s = await api('/api/admin/stats');
-  document.getElementById('statsRow').innerHTML = `
-    <div class="stat-card"><div class="stat-num">${s.total}</div><div>Всего</div></div>
-    <div class="stat-card warn"><div class="stat-num">${s.pending}</div><div>В работе</div></div>
-    <div class="stat-card ok"><div class="stat-num">${s.done}</div><div>Выполнено</div></div>
-    <div class="stat-card revenue"><div class="stat-num">${s.revenue} смн</div><div>Оборот</div></div>`;
+  try {
+    const s = await api('/api/admin/stats');
+    const row = document.getElementById('statsRow');
+    if (!row) return;
+    row.innerHTML = `
+      <div class="stat-card"><div class="stat-num">${s.total}</div><div>Всего</div></div>
+      <div class="stat-card warn"><div class="stat-num">${s.pending}</div><div>В работе</div></div>
+      <div class="stat-card ok"><div class="stat-num">${s.done}</div><div>Выполнено</div></div>
+      <div class="stat-card revenue"><div class="stat-num">${s.revenue} смн</div><div>Оборот</div></div>`;
+  } catch (e) { console.error(e); }
 }
 
+// ========================================
+// ORDERS
+// ========================================
 async function loadOrders() {
   const orders = await api('/api/admin/orders?status=' + currentFilter);
   const list = document.getElementById('ordersList');
@@ -109,6 +159,9 @@ async function delOrder(id) {
   loadOrders(); loadStats();
 }
 
+// ========================================
+// GAMES
+// ========================================
 async function loadGames() {
   const games = await api('/api/admin/games');
   const box = document.getElementById('gamesAdmin');
@@ -141,24 +194,39 @@ async function addGame() {
   await api('/api/admin/game', { method: 'POST', body: JSON.stringify({ name, icon, color }) });
   loadGames();
 }
-async function delGame(id) { if (confirm('Удалить игру?')) { await api('/api/admin/game?id=' + id, { method: 'DELETE' }); loadGames(); } }
-async function updGame(id, field, val) { await api('/api/admin/game?id=' + id, { method: 'PUT', body: JSON.stringify({ [field]: val }) }); }
+
+async function delGame(id) {
+  if (confirm('Удалить игру?')) {
+    await api('/api/admin/game?id=' + id, { method: 'DELETE' });
+    loadGames();
+  }
+}
+
+async function updGame(id, field, val) {
+  await api('/api/admin/game?id=' + id, { method: 'PUT', body: JSON.stringify({ [field]: val }) });
+}
+
 async function addItem(gameId) {
   const name = prompt('Название товара:'); if (!name) return;
   const price = +prompt('Цена (смн):') || 0;
   await api('/api/admin/item', { method: 'POST', body: JSON.stringify({ game_id: gameId, name, price }) });
   loadGames();
 }
+
 async function updItem(gameId, id, field, val) {
   const body = {}; body[field] = field === 'price' ? +val : val;
   await api(`/api/admin/item?game_id=${gameId}&id=${id}`, { method: 'PUT', body: JSON.stringify(body) });
 }
+
 async function delItem(gameId, id) {
   if (!confirm('Удалить?')) return;
   await api(`/api/admin/item?game_id=${gameId}&id=${id}`, { method: 'DELETE' });
   loadGames();
 }
 
+// ========================================
+// PAYMENTS
+// ========================================
 async function loadPayments() {
   const payments = await api('/api/admin/payments');
   const box = document.getElementById('paymentsAdmin');
@@ -172,17 +240,18 @@ async function loadPayments() {
       </div>
     </div>`).join('');
 }
+
 async function addPayment() {
   await api('/api/admin/payment', { method: 'POST', body: JSON.stringify({ method: 'NEW', number: '', holder: '' }) });
   loadPayments();
 }
+
 async function updPay(id, field, val) {
   await api('/api/admin/payment?id=' + id, { method: 'PUT', body: JSON.stringify({ [field]: val }) });
 }
+
 async function delPay(id) {
   if (!confirm('Удалить?')) return;
   await api('/api/admin/payment?id=' + id, { method: 'DELETE' });
   loadPayments();
 }
-
-if (PASSWORD) showPanel();
